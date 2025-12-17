@@ -451,7 +451,7 @@ def save_dataset_with_hdf5(df, save_dir, is_train=True):
     event_ids_path = os.path.join(save_dir, "event_ids.npy")
 
     # 对数据集进行平衡
-    print(f"\n⚖️  正在平衡{'训练集' if is_train else '验证/测试集'}...")
+    print(f"\n  正在平衡{'训练集' if is_train else '验证/测试集'}...")
 
     if is_train:
         # 训练集：先事件级平衡，再TRACE级平衡和数据增强
@@ -541,7 +541,7 @@ def save_dataset_with_hdf5(df, save_dir, is_train=True):
                 # 打印进度
                 current_idx = batch_start + len(batch_waveforms)
                 if current_idx % 100 == 0 or current_idx >= total_traces_to_process:
-                    print(f"🔄 已处理trace：{current_idx}/{total_traces_to_process}（{os.path.basename(save_dir)}）")
+                    print(f" 已处理trace：{current_idx}/{total_traces_to_process}（{os.path.basename(save_dir)}）")
 
         # 增量写入HDF5
         if batch_waveforms:

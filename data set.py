@@ -98,14 +98,14 @@ def load_metadata(metadata_path):
     explosion_traces = metadata[metadata["event_type"] == "explosion"]
     earthquake_traces = metadata[metadata["event_type"] == "earthquake"]
 
-    print(f"\n📊 原始数据统计：")
+    print(f"\n 原始数据统计：")
     print(f"  - 地震trace：{len(earthquake_traces)}个")
     print(f"  - 爆炸trace：{len(explosion_traces)}个")
     print(f"  - 地震事件：{earthquake_traces['event_id'].nunique()}个")
     print(f"  - 爆炸事件：{explosion_traces['event_id'].nunique()}个")
 
     # 统计震级分箱
-    print(f"\n📈 震级分箱统计：")
+    print(f"\n 震级分箱统计：")
     for event_type in ["earthquake", "explosion"]:
         type_traces = metadata[metadata["event_type"] == event_type]
         print(f"  - {event_type}:")
@@ -133,7 +133,7 @@ def split_train_test_val(metadata_df):
     total_events = len(event_level_df)
     total_traces = len(metadata_df)
 
-    print(f"\n📊 事件级统计（分割前）：")
+    print(f"\n 事件级统计（分割前）：")
     print(f"  - 总事件数：{total_events}个")
     print(f"  - 总trace数：{total_traces}个")
     print(f"  - 平均每个事件trace数：{total_traces / total_events:.2f}个")
@@ -185,7 +185,7 @@ def split_train_test_val(metadata_df):
     test_stats = count_subset_stats(test_df, "Test")
 
     # 打印分割结果
-    print(f"\n📅 事件级时间分割最终结果：")
+    print(f"\n 事件级时间分割最终结果：")
     print("  " + "-" * 120)
     print(f"  {'子集':<8} {'事件数(总/震/爆)':<20} {'事件占比(%)':<12} {'trace数(总/震/爆)':<20} {'trace占比(%)':<12}")
     print("  " + "-" * 120)
@@ -306,7 +306,7 @@ def balance_events_by_mag_bin(df):
     earthquake_events = event_first_traces[event_first_traces["event_type"] == "earthquake"]
     explosion_events = event_first_traces[event_first_traces["event_type"] == "explosion"]
 
-    print(f"\n📊 事件平衡前统计：")
+    print(f"\n 事件平衡前统计：")
     print(f"  - 地震事件：{len(earthquake_events)}个")
     print(f"  - 爆炸事件：{len(explosion_events)}个")
 
@@ -363,8 +363,8 @@ def balance_and_augment_training_traces(df, balanced_event_ids):
     对训练集进行TRACE级别平衡和数据增强
     爆炸事件固定增强5倍，地震事件根据震级分箱增强以达到平衡
     """
-    print(f"\n⚖️  正在进行训练集TRACE级别平衡和数据增强...")
-    print(f"💥 爆炸事件固定增强{AUGMENT_TIMES}倍，地震事件根据震级分箱调整增强倍数以达到平衡")
+    print(f"\n 正在进行训练集TRACE级别平衡和数据增强...")
+    print(f" 爆炸事件固定增强{AUGMENT_TIMES}倍，地震事件根据震级分箱调整增强倍数以达到平衡")
 
     # 筛选平衡后的事件对应的所有trace
     balanced_df = df[df["event_id"].isin(balanced_event_ids)].copy()
@@ -395,7 +395,7 @@ def balance_and_augment_training_traces(df, balanced_event_ids):
         else:
             eq_augment_factor = 0
 
-        print(f"\n📦 震级分箱 {mag_bin}:")
+        print(f"\n 震级分箱 {mag_bin}:")
         print(f"  - 原始地震trace: {len(eq_traces)}, 爆炸trace: {len(ex_traces)}")
         print(f"  - 爆炸增强{AUGMENT_TIMES}倍后: {ex_augmented_count}个")
         print(f"  - 地震需要增强{eq_augment_factor}倍以达到平衡")
@@ -594,30 +594,30 @@ def save_dataset_with_hdf5(df, save_dir, is_train=True):
 # -------------------------- 9. 主函数 --------------------------
 if __name__ == "__main__":
     print("=" * 60)
-    print("🎉 开始 ComCat 数据集处理（震级分箱平衡）")
+    print(" 开始 ComCat 数据集处理（震级分箱平衡）")
     print("=" * 60)
 
     try:
-        print("\n【1/3】📥 加载元数据...")
+        print("\n【1/3】 加载元数据...")
         metadata_df = load_metadata(METADATA_PATH)
 
-        print("\n【2/3】✂️  事件级时间分割数据集（无泄露）...")
+        print("\n【2/3】  事件级时间分割数据集（无泄露）...")
         train_df, val_df, test_df = split_train_test_val(metadata_df)
 
-        print("\n【3/3】💾 处理并保存数据集...")
-        print("\n▶️  处理训练集（事件平衡 + TRACE级别平衡 + 爆炸5倍增强 + 地震动态增强）...")
+        print("\n【3/3】 处理并保存数据集...")
+        print("\n  处理训练集（事件平衡 + TRACE级别平衡 + 爆炸5倍增强 + 地震动态增强）...")
         save_dataset_with_hdf5(train_df, os.path.join(OUTPUT_ROOT, "train"), is_train=True)
 
-        print("\n▶️  处理验证集（事件平衡，保留所有TRACE，无增强）...")
+        print("\n  处理验证集（事件平衡，保留所有TRACE，无增强）...")
         save_dataset_with_hdf5(val_df, os.path.join(OUTPUT_ROOT, "val"), is_train=False)
 
-        print("\n▶️  处理测试集（事件平衡，保留所有TRACE，无增强）...")
+        print("\n  处理测试集（事件平衡，保留所有TRACE，无增强）...")
         save_dataset_with_hdf5(test_df, os.path.join(OUTPUT_ROOT, "test"), is_train=False)
 
         print("\n" + "=" * 60)
-        print("🎊 所有处理完成！")
-        print(f"📁 最终数据存储路径：{OUTPUT_ROOT}")
-        print("💡 已通过震级分箱平衡确保所有数据集平衡")
+        print(" 所有处理完成！")
+        print(f" 最终数据存储路径：{OUTPUT_ROOT}")
+        print(" 已通过震级分箱平衡确保所有数据集平衡")
         print("=" * 60)
     except Exception as e:
         print(f"\n❌ 处理失败：{str(e)}")

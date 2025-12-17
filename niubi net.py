@@ -142,9 +142,9 @@ class KillOnNegativeLoss(Callback):
         main_loss = logs.get('loss')
         if main_loss is not None and main_loss < 0:
             self.count += 1
-            print(f"\n🚨 KillOnNegativeLoss: 第 {self.count} 次负 loss ({main_loss:.4f})")
+            print(f"\n KillOnNegativeLoss: 第 {self.count} 次负 loss ({main_loss:.4f})")
             if self.count >= self.patience:
-                print("🛑 停止训练，检查损失函数！")
+                print(" 停止训练，检查损失函数！")
                 self.model.stop_training = True
 
 @tf.keras.utils.register_keras_serializable()
@@ -806,7 +806,7 @@ def group_metadata_by_event(metadata):
             trace_count_distribution[trace_count] = 0
         trace_count_distribution[trace_count] += 1
 
-        # 🎯 关键修改：保留所有事件，包括单trace事件
+        # 关键修改：保留所有事件，包括单trace事件
         all_events.append((event_type, traces))
 
     # 动态设置 MAX_TRACES_PER_EVENT（基于所有事件）
@@ -897,7 +897,7 @@ def trace_generator(metadata, h5_manager, scaler=None, shuffle=False, is_trainin
                 raw_sr = float(row["trace_sampling_rate_hz"])
                 p_arrival = calculate_arrival_time(start_dt, int(row["trace_P_arrival_sample"]), raw_sr)
                 s_arrival = calculate_arrival_time(start_dt, int(row["trace_S_arrival_sample"]), raw_sr)
-                # 🛠️ 修复：传入 is_training 参数
+                #修复：传入 is_training 参数
                 processed_wave, log_pg_sg = preprocess_waveform(raw_wave, raw_sr, p_arrival, s_arrival, start_dt, is_training)
                 del raw_wave
 
@@ -916,7 +916,7 @@ def trace_generator(metadata, h5_manager, scaler=None, shuffle=False, is_trainin
                 )
                 time_features = extract_time_features(row["origin_time"])
 
-                # 🛠️ 修复：构建8维特征向量（单Trace训练阶段）
+                #  修复：构建8维特征向量（单Trace训练阶段）
                 feat_vector = np.array([
                     fractal_dim,
                     float(row["mag"]),
@@ -937,7 +937,7 @@ def trace_generator(metadata, h5_manager, scaler=None, shuffle=False, is_trainin
                 label = 1 if row["event_type"] == "earthquake" else 0
 
                 success_count += 1
-                # 🛠️ 修复：输出8维特征向量
+                #  修复：输出8维特征向量
                 yield (processed_wave, spec_data, feat_vector), np.array(label, dtype=np.int8)
 
             except Exception as e:
@@ -987,7 +987,7 @@ def event_generator(event_groups, h5_path, scaler=None, shuffle=False, trace_pro
                     raw_sr = float(row["trace_sampling_rate_hz"])
                     p_arrival = calculate_arrival_time(start_dt, int(row["trace_P_arrival_sample"]), raw_sr)
                     s_arrival = calculate_arrival_time(start_dt, int(row["trace_S_arrival_sample"]), raw_sr)
-                    # 🛠️ 修复：传入 is_training 参数
+                    #  修复：传入 is_training 参数
                     processed_wave, log_pg_sg = preprocess_waveform(raw_wave, raw_sr, p_arrival, s_arrival, start_dt, is_training)
                     spec_data = calculate_spectrogram(processed_wave)
                     processed_wave = np.expand_dims(processed_wave, axis=-1)
@@ -999,7 +999,7 @@ def event_generator(event_groups, h5_path, scaler=None, shuffle=False, trace_pro
                         row["station_latitude_deg"], row["station_longitude_deg"])
                     time_features = extract_time_features(row["origin_time"])
 
-                    # 🛠️ 修复：构建8维特征向量
+                    #  修复：构建8维特征向量
                     feat_vector = np.array([
                         fractal_dim,
                         float(row["mag"]),
@@ -1055,7 +1055,7 @@ def event_generator(event_groups, h5_path, scaler=None, shuffle=False, trace_pro
 def build_trace_tf_dataset(metadata, h5_manager, scaler=None, shuffle=False, batch_size=TRACE_BATCH_SIZE, is_training=False):
     """构建单trace的TF数据集 - 修复特征维度问题"""
 
-    # 🛠️ 修复：输出形状调整：特征维度改为8
+    #  修复：输出形状调整：特征维度改为8
     output_types = ((tf.float32, tf.float32, tf.float32), tf.int8)
     output_shapes = (
         (
@@ -1100,7 +1100,7 @@ def build_event_tf_dataset(event_groups, h5_path, scaler=None, shuffle=False,
         ):
             n_real = waves.shape[0]
 
-            # 🛠️ 修复：确保所有数组都有正确的形状
+            # 修复：确保所有数组都有正确的形状
             if n_real > max_tr:
                 # 如果trace数量超过最大值，截断
                 waves = waves[:max_tr]
@@ -1121,7 +1121,7 @@ def build_event_tf_dataset(event_groups, h5_path, scaler=None, shuffle=False,
                 feats = np.pad(feats, feat_pad_shape, 'constant')
                 y_trace = np.pad(y_trace, (0, pad), constant_values=-1)
 
-            # 🛠️ 修复：确保返回正确的数据类型
+            # 修复：确保返回正确的数据类型
             yield (waves.astype(np.float32),
                    specs.astype(np.float32),
                    feats.astype(np.float32)), \
@@ -1217,7 +1217,7 @@ class ExplosionRecallLogger(Callback):
                     y_true.extend(y_label.numpy().tolist())
                     y_pred_prob.extend(pred.flatten().tolist())
             else:
-                # 🛠️ 修复：现在只有两个输出
+                # 修复：现在只有两个输出
                 for (x1, x2, x3), (y_event, y_trace) in self.val_dataset.take(self.val_steps):
                     pred = self.model.predict([x1, x2, x3], verbose=0)
                     pred = pred[0]  # 事件级输出是第一个
@@ -1420,7 +1420,7 @@ class EarthquakeClassifier:
         y = layers.GlobalAveragePooling2D()(y)
         spectrogram_branch = layers.Dense(32, activation="relu", name="spec_embed")(y)
 
-        # 🛠️ 修复：特征输入改为8维（预计算阶段只有8维特征）
+        #  修复：特征输入改为8维（预计算阶段只有8维特征）
         features_input = layers.Input(shape=(8,), name="features_input")  # 改为8维!
         z = layers.Dense(32, activation="relu")(features_input)
         z = layers.BatchNormalization()(z)
@@ -1451,7 +1451,7 @@ class EarthquakeClassifier:
         print("开始预计算 trace 概率...")
         probs = {}
 
-        # 🛠️ 修复：逐条处理，确保特征维度正确
+        #  修复：逐条处理，确保特征维度正确
         total_traces = len(metadata)
         success_count = 0
         error_count = 0
@@ -1537,7 +1537,7 @@ class EarthquakeClassifier:
                         norm_part = self.scaler.transform(norm_part.reshape(1, -1)).flatten()
                         feat_vector = merge_feat_vector(norm_part, dist, depth)
 
-                    # 🛠️ 关键：对每条有效trace进行预测
+                    #  关键：对每条有效trace进行预测
                     # 准备输入数据 - 使用8维特征
                     wave_input = np.expand_dims(processed_wave, axis=0)  # (1, 4500, 1)
                     spec_input = np.expand_dims(spec_data, axis=0)  # (1, 75, 115, 1)
@@ -1608,13 +1608,13 @@ class EarthquakeClassifier:
         trace_out = layers.TimeDistributed(
             layers.Dense(1, activation='sigmoid'), name='trace_classifier')(masked)
 
-        # 🛠️ 修复：创建模型时只包含需要损失函数的输出
+        #  修复：创建模型时只包含需要损失函数的输出
         model = keras.Model(
             inputs=[event_wave_input, event_spec_input, event_feat_input],
             outputs=[event_out, trace_out]  # 只包含两个需要损失函数的输出
         )
 
-        # 🛠️ 修复：编译配置只包含两个输出
+        #  修复：编译配置只包含两个输出
         optimizer = build_safe_optimizer(LEARNING_RATE)
         model.compile(
             optimizer=optimizer,
@@ -1632,7 +1632,7 @@ class EarthquakeClassifier:
             }
         )
 
-        # 🛠️ 新增：创建包含注意力权重的子模型用于可视化
+        #  新增：创建包含注意力权重的子模型用于可视化
         self.attention_model = keras.Model(
             inputs=[event_wave_input, event_spec_input, event_feat_input],
             outputs=attention_weights
@@ -1755,7 +1755,7 @@ class EarthquakeClassifier:
         print("构建单trace模型...")
         self.build_trace_model()
 
-        # 🛠️ 关键修复：验证模型构建成功
+        #  关键修复：验证模型构建成功
         if self.trace_model is None:
             raise RuntimeError("单Trace模型构建失败")
 
@@ -1910,7 +1910,7 @@ class EarthquakeClassifier:
             y_true, y_pred_prob = [], []
             trace_pred_flat, trace_true_flat = [], []
 
-            # 🛠️ 修复：现在只有两个输出
+            #  修复：现在只有两个输出
             for (x1, x2, x3), (y_event, y_trace) in test_dataset.take(test_steps):
                 # 预测
                 preds = self.model.predict([x1, x2, x3], verbose=0)
@@ -2160,7 +2160,7 @@ class EarthquakeClassifier:
                 val_steps = int(np.ceil(len(val_event_groups) / BATCH_SIZE))
                 print(f"训练步数: {train_steps} | 验证步数: {val_steps}")
 
-                # 🛠️ 关键修复3：验证模型是否构建成功
+                #  关键修复3：验证模型是否构建成功
                 if self.model is None:
                     raise RuntimeError("事件级模型构建失败，无法训练")
 
@@ -2269,11 +2269,11 @@ class EarthquakeClassifier:
         distances, qualities, attention_weights = [], [], []
         event_types, depths, correctness_labels = [], [], []
 
-        # 🛠️ 修复：现在只有两个输出 (y_event, y_trace)
+        #  修复：现在只有两个输出 (y_event, y_trace)
         for (x1, x2, x3), (y_event, y_trace) in dataset.take(steps):
             preds = self.model.predict([x1, x2, x3], verbose=0)
 
-            # 🛠️ 修复：使用注意力子模型获取注意力权重
+            #  修复：使用注意力子模型获取注意力权重
             attn_weights = self.attention_model.predict([x1, x2, x3], verbose=0)
             trace_pred = preds[1]
 
@@ -2428,7 +2428,7 @@ class EarthquakeClassifier:
         distances, trace_qualities, attention_weights = [], [], []
         event_types, depths, correctness_labels = [], [], []
 
-        # 🛠️ 修复：现在只有两个输出 (y_event, y_trace)
+        #  修复：现在只有两个输出 (y_event, y_trace)
         for (x1, x2, x3), (y_event, y_trace) in dataset.take(steps):
             # 使用单TRACE模型的预测概率计算质量
             batch_size = y_event.shape[0]
@@ -2770,12 +2770,12 @@ class EarthquakeClassifier:
                 x1, x2, x3 = inputs
                 y_event, y_trace = outputs
 
-                # 🛠️ 修复：确保输入数据有效
+                #  修复：确保输入数据有效
                 if (x1.shape[0] == 0 or x2.shape[0] == 0 or x3.shape[0] == 0):
                     print(f"批次 {batch_count}: 输入数据为空，跳过")
                     continue
 
-                # 🛠️ 修复：模型现在返回两个输出
+                #  修复：模型现在返回两个输出
                 try:
                     preds = self.model.predict([x1, x2, x3], verbose=0, steps=1)
                 except Exception as e:
@@ -2808,7 +2808,7 @@ class EarthquakeClassifier:
                         if n_real == 0:
                             continue
 
-                        # 🛠️ 修复：正确处理trace预测形状
+                        #  修复：正确处理trace预测形状
                         if trace_pred is not None:
                             # trace_pred 形状应该是 (batch_size, max_traces, 1)
                             if len(trace_pred.shape) == 3:
@@ -3082,7 +3082,7 @@ def main():
             skip_training=skip_training
         )
 
-        # 🛠️ 修复：检查模型是否成功构建
+        #  修复：检查模型是否成功构建
         if classifier.model is None:
             print("错误: 模型训练失败，模型为None!")
             return
@@ -3178,7 +3178,7 @@ def main():
         traceback.print_exc()
         print("=" * 60)
 
-        # 🛠️ 修复：使用正确的备份文件名
+        #  修复：使用正确的备份文件名
         if hasattr(classifier, 'model') and classifier.model is not None:
             print("尝试保存当前模型...")
             try:
